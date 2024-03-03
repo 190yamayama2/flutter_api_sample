@@ -4,35 +4,34 @@ import 'package:flutter_api_sample/viewModel/splash_screen_view_model.dart';
 import 'package:provider/provider.dart';
 
 class SplashScreen extends StatefulWidget {
-  SplashScreen({Key key}) : super(key: key);
+  const SplashScreen({required Key key}) : super(key: key);
 
   @override
-  _SplashScreenState createState() => _SplashScreenState();
+  SplashScreenState createState() => SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class SplashScreenState extends State<SplashScreen> {
 
-  final viewModel = SplashScreenViewModel();
+  late final SplashScreenViewModel viewModel;
 
   @override
   Widget build(BuildContext context) {
-
-    // タイマーでの画面遷移
+    viewModel = SplashScreenViewModel();
     viewModel.moveNextScreen(context);
-
     return ChangeNotifierProvider(
         create: (context) => viewModel,
-        child: SplashScreenPage()
+        child: const SplashScreenPage()
     );
   }
 
 }
 
 class SplashScreenPage extends StatelessWidget {
+  const SplashScreenPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       body: Center(
           child: Image(
               key: Key(WidgetKey.KEY_SPLASH_SPLASH_IMAGE),
@@ -41,4 +40,5 @@ class SplashScreenPage extends StatelessWidget {
       ),
     );
   }
+
 }

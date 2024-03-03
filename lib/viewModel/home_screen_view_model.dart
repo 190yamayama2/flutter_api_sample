@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_api_sample/api/api_respose_type.dart';
-import 'package:flutter_api_sample/api/qitta/model/qiita_article.dart';
-import 'package:flutter_api_sample/repository/qiita_repository.dart';
+import 'package:flutter_api_sample/domain/UseCase/FetchArticleUseCase.dart';
+import 'package:flutter_api_sample/domain/api/qitta/model/qiita_article.dart';
 import 'package:flutter_api_sample/ui/parts/dialogs.dart';
 import 'package:flutter_api_sample/ui/screen/web_view_screen.dart';
+import '../domain/api/api_respose_type.dart';
 
 class HomeScreenViewModel with ChangeNotifier {
 
   final int perPage = 20; // 取得件数
-  final String query = "qiita user:Qiita";
 
-  QiitaRepository _qiitaRepository;
+  FetchArticleUseCaseInterface _fetchArticleUseCase;
 
   int page = 1;
   List<QiitaArticle> articles = [];
 
-  HomeScreenViewModel([QiitaRepository qiitaRepository]) {
-    _qiitaRepository = qiitaRepository ?? QiitaRepository();
-  }
+  HomeScreenViewModel({required FetchArticleUseCaseInterface fetchArticleUseCase})
+      : _fetchArticleUseCase = fetchArticleUseCase;
 
   Future<bool> fetchArticle(BuildContext context) async {
     page += 1;
@@ -25,9 +23,9 @@ class HomeScreenViewModel with ChangeNotifier {
     final dialogs = Dialogs(context: context);
     dialogs.showLoadingDialog();
 
-    return _qiitaRepository.fetchArticle(page, perPage, query)
+    return _fetchArticleUseCase.fetchArticle(page, perPage)
         .then((result) {
-          if (result == null || result.apiStatus.code != ApiResponseType.OK.code) {
+          if (result.apiStatus.code != ApiResponseType.ok.code) {
             // ロード中のダイアログを閉じる
             dialogs.closeDialog();
             // エラーメッセージのダイアログを表示する
@@ -47,9 +45,9 @@ class HomeScreenViewModel with ChangeNotifier {
   Future<bool> loadMore(BuildContext context) async {
     page += 1;
 
-    return _qiitaRepository.fetchArticle(page, perPage, query)
+    return _fetchArticleUseCase.fetchArticle(page, perPage)
         .then((result) {
-          if (result == null || result.apiStatus.code != ApiResponseType.OK.code) {
+          if (result.apiStatus.code != ApiResponseType.ok.code) {
             // エラーメッセージのダイアログを表示する
             final dialogs = Dialogs(context: context);
             dialogs.showErrorDialog(result.message);
@@ -66,21 +64,23 @@ class HomeScreenViewModel with ChangeNotifier {
     page = 0;
     articles.clear();
     notifyListeners();
-
     return fetchArticle(context);
   }
 
   void moveWebViewScreen(BuildContext context, int index) {
     var url = articles[index].url;
+    if (url == null) return;
     Navigator.push(
         context,
-        MaterialPageRoute(builder: (BuildContext context) => WebViewScreen(urlString: url))
+        MaterialPageRoute(
+            builder: (BuildContext context) => WebViewScreen(urlString: url, key: UniqueKey(),)
+        )
     );
   }
 
-  Future<bool> showExitDialog(BuildContext context) {
+  void showExitDialog(BuildContext context) {
     final dialogs = Dialogs(context: context);
-    return dialogs.showExitDialog();
+    dialogs.showExitDialog();
   }
 
 }

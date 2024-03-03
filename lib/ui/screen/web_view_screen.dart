@@ -5,24 +5,51 @@ import 'package:flutter_api_sample/ui/widget_keys.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class WebViewScreen extends StatefulWidget {
-  WebViewScreen({Key key, @required this.urlString}) : super(key: key);
+  const WebViewScreen({required Key key, required this.urlString}) : super(key: key);
   final String urlString;
 
   @override
-  _WebViewScreenState createState() => _WebViewScreenState();
+  WebViewScreenState createState() => WebViewScreenState();
 }
 
-class _WebViewScreenState extends State<WebViewScreen> {
+class WebViewScreenState extends State<WebViewScreen> {
 
   final Completer<WebViewController> _controller = Completer<WebViewController>();
 
   @override
   Widget build(BuildContext context) {
+    var controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0x00000000))
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+
+          },
+          onPageStarted: (String url) {
+
+          },
+          onPageFinished: (String url) {
+
+          },
+          onWebResourceError: (WebResourceError error) {
+
+          },
+          onNavigationRequest: (NavigationRequest request) {
+            if (request.url.startsWith(widget.urlString)) {
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(widget.urlString));
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('記事詳細'),
         leading: IconButton(
-          key: Key(WidgetKey.KEY_WEB_APP_BAR_ICON_BUTTON),
+          key: const Key(WidgetKey.KEY_WEB_APP_BAR_ICON_BUTTON),
           icon: const Icon(
             Icons.arrow_back,
             key: Key(WidgetKey.KEY_WEB_APP_BAR_ICON),
@@ -31,67 +58,35 @@ class _WebViewScreenState extends State<WebViewScreen> {
         ),
       ),
       body: Builder(builder: (BuildContext context) {
-        return WebView(
-          initialUrl: widget.urlString,
-          javascriptMode: JavascriptMode.unrestricted,
-          onWebViewCreated: (WebViewController webViewController) {
-            _controller.complete(webViewController);
-          },
-          javascriptChannels: <JavascriptChannel>[
-            _toasterJavascriptChannel(context),
-          ].toSet(),
-          navigationDelegate: (NavigationRequest request) {
-            print('allowing navigation to $request');
-            return NavigationDecision.navigate;
-          },
-          onPageStarted: (String url) {
-            print('Page started loading: $url');
-          },
-          onPageFinished: (String url) {
-            print('Page finished loading: $url');
-          },
-          gestureNavigationEnabled: true,
-        );
+        return WebViewWidget(controller: controller);
       }),
       bottomNavigationBar: BottomAppBar(
         child: FutureBuilder<WebViewController>(
             future: _controller.future,
             builder: (BuildContext context, AsyncSnapshot<WebViewController> snapshot) {
-              final bool webViewReady = snapshot.connectionState == ConnectionState.done;
-              final WebViewController snapshotData = snapshot.data;
               return Row(
                   children: [
                     IconButton(
+                      onPressed: () async {
+                        if (await controller.canGoBack()) {
+                          controller.goBack();
+                        }
+                      },
                       icon: const Icon(Icons.arrow_back_ios),
-                      onPressed: !webViewReady ? null : () async {
-                        if (await snapshotData.canGoBack()) {
-                          await snapshotData.goBack();
-                        } else {
-                          Scaffold.of(context).showSnackBar(
-                            const SnackBar(content: Text("履歴がありません")),
-                          );
-                          return;
-                        }
-                      },
                     ),
                     IconButton(
+                      onPressed: () async {
+                        if (await controller.canGoForward()) {
+                          controller.goForward();
+                        }
+                      },
                       icon: const Icon(Icons.arrow_forward_ios),
-                      onPressed: !webViewReady ? null : () async {
-                        if (await snapshotData.canGoForward()) {
-                          await snapshotData.goForward();
-                        } else {
-                          Scaffold.of(context).showSnackBar(
-                            const SnackBar(content: Text("履歴がありません")),
-                          );
-                          return;
-                        }
-                      },
                     ),
                     IconButton(
-                      icon: const Icon(Icons.autorenew),
-                      onPressed: !webViewReady ? null : () {
-                        snapshotData.reload();
+                      onPressed: () {
+                        controller.reload();
                       },
+                      icon: const Icon(Icons.autorenew),
                     ),
                   ],
               );
@@ -99,16 +94,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
         ),
       ),
     );
-  }
-
-  JavascriptChannel _toasterJavascriptChannel(BuildContext context) {
-    return JavascriptChannel(
-        name: 'Toaster',
-        onMessageReceived: (JavascriptMessage message) {
-          Scaffold.of(context).showSnackBar(
-            SnackBar(content: Text(message.message)),
-          );
-        });
   }
 
 }

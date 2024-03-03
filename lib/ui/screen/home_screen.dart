@@ -1,104 +1,101 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_api_sample/api/qitta/model/qiita_user.dart';
+import 'package:flutter_api_sample/domain/api/qitta/model/qiita_user.dart';
 import 'package:flutter_api_sample/ui/widget_keys.dart';
 import 'package:flutter_api_sample/viewModel/home_screen_view_model.dart';
 import 'package:provider/provider.dart';
+import '../../domain/UseCase/FetchArticleUseCase.dart';
 
 
 class HomeScreen extends StatefulWidget {
-  HomeScreen({Key key}) : super(key: key);
+  const HomeScreen({required Key key}) : super(key: key);
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  HomeScreenState createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
+
+  late final HomeScreenViewModel viewModel;
+  late final FetchArticleUseCaseInterface fetchArticleUseCase;
 
   @override
   Widget build(BuildContext context) {
+    fetchArticleUseCase = FetchArticleUseCase();
+    viewModel = HomeScreenViewModel(fetchArticleUseCase: fetchArticleUseCase);
     return ChangeNotifierProvider(
-      create: (context) => HomeScreenViewModel(),
-      child: HomeScreenPage(),
+      create: (context) => viewModel,
+      child: const HomeScreenPage(),
     );
   }
 
 }
 
 class HomeScreenPage extends StatelessWidget {
-
-  Future<bool> _onWillPop(BuildContext context) async {
-    return (await context.read<HomeScreenViewModel>().showExitDialog(context)) ?? false;
-  }
+  const HomeScreenPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-        onWillPop: () => _onWillPop(context),
-        child: Scaffold(
-          appBar: AppBar(
-            key: Key(WidgetKey.KEY_HOME_APP_BAR),
-            title: Text(
-              "Qiita 新着記事一覧",
-              key: Key(WidgetKey.KEY_HOME_APP_BAR_TITLE),
-            ),
-            backgroundColor: Colors.greenAccent,
-            leading: IconButton(
-              key: Key(WidgetKey.KEY_HOME_APP_BAR_ICON_BUTTON),
-              icon: const Icon(
-                Icons.search,
-                key: Key(WidgetKey.KEY_HOME_APP_BAR_ICON),
-              ),
-              onPressed: () => context.read<HomeScreenViewModel>().refresh(context),
-            ),
+    return Scaffold(
+        appBar: AppBar(
+          key: const Key(WidgetKey.KEY_HOME_APP_BAR),
+          title: const Text(
+            "Qiita 新着記事一覧",
+            key: Key(WidgetKey.KEY_HOME_APP_BAR_TITLE),
           ),
-          body: RefreshIndicator(
-            onRefresh:() => context.read<HomeScreenViewModel>().refresh(context),
-            child: ListView.builder(
-              key: Key(WidgetKey.KEY_HOME_LIST_VIEW),
-              itemBuilder: (BuildContext context, int index) {
-
-                var length = context.read<HomeScreenViewModel>().articles.length -1;
-                if (index == length) {
-                  // 追加読み込み
-                  context.read<HomeScreenViewModel>().loadMore(context);
-                  // 画面にはローディング表示しておく
-                  return new Center(
-                    child: new Container(
-                      margin: const EdgeInsets.only(top: 8.0),
-                      width: 32.0,
-                      height: 32.0,
-                      child: const CircularProgressIndicator(),
-                    ),
-                  );
-                } else if (index > length) {
-                  // ローディング表示より先は無し
-                  return null;
-                }
-
-                // 行アイテム返却
-                return Container(
-                  child: rowWidget(context, index),
-                  alignment: Alignment.bottomLeft,
-                  decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey)
+          backgroundColor: Colors.greenAccent,
+          leading: IconButton(
+            key: const Key(WidgetKey.KEY_HOME_APP_BAR_ICON_BUTTON),
+            icon: const Icon(
+              Icons.search,
+              key: Key(WidgetKey.KEY_HOME_APP_BAR_ICON),
+            ),
+            onPressed: () => context.read<HomeScreenViewModel>().refresh(context),
+          ),
+        ),
+        body: RefreshIndicator(
+          onRefresh:() => context.read<HomeScreenViewModel>().refresh(context),
+          child: ListView.builder(
+            key: const Key(WidgetKey.KEY_HOME_LIST_VIEW),
+            itemBuilder: (BuildContext context, int index) {
+              var length = context.read<HomeScreenViewModel>().articles.length -1;
+              if (index == length) {
+                // load more request
+                context.read<HomeScreenViewModel>().loadMore(context);
+                // loading display
+                return Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 8.0),
+                    width: 32.0,
+                    height: 32.0,
+                    child: const CircularProgressIndicator(),
                   ),
                 );
-              },
-              itemCount: context.watch<HomeScreenViewModel>().articles.length,
-            ),
+              } else if (index > length) {
+                return null;
+              }
+              return Container(
+                alignment: Alignment.bottomLeft,
+                decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey)
+                ),
+                child: rowWidget(context, index),
+              );
+            },
+            itemCount: context.watch<HomeScreenViewModel>().articles.length,
           ),
-        )
+        ),
     );
   }
 
   Widget rowWidget(BuildContext context, int index) {
     return Wrap(
+      spacing: 8.0,
       children: [
         userRow(context, index),
+        postedDateRow(context, index),
         titleRow(context, index),
         tagsRow(context, index),
-        postedDateRow(context, index),
         lgtmRow(context, index),
       ],
     );
@@ -118,14 +115,14 @@ class HomeScreenPage extends StatelessWidget {
                   image: DecorationImage(
                       fit: BoxFit.fill,
                       image: CachedNetworkImageProvider(
-                          article.user.profileImageUrl,
+                          article.user.profileImageUrl ?? "",
                       ),
                   )
               )
           ),
           Text(
-            (article.user?.displayUserName ?? QiitaUser.anonymousUserName) ,
-            style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+            (article.user.displayUserName ?? QiitaUser.anonymousUserName) ,
+            style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
           ),
           Container(
             margin: const EdgeInsets.all(3.0),
@@ -134,7 +131,7 @@ class HomeScreenPage extends StatelessWidget {
               border: Border.all(color: Colors.green),
               borderRadius: BorderRadius.circular(5),
             ),
-            child: Text(
+            child: const Text(
                 "Followers",
                 style: TextStyle(
                     fontSize: 18,
@@ -145,7 +142,7 @@ class HomeScreenPage extends StatelessWidget {
           ),
           Text(
               "${article.user.followersCountString}",
-              style: TextStyle(
+              style: const TextStyle(
                   fontSize: 20,
                   fontStyle: FontStyle.italic
               )
@@ -159,31 +156,34 @@ class HomeScreenPage extends StatelessWidget {
     return Wrap(
         crossAxisAlignment: WrapCrossAlignment.start,
         children: [
-          FlatButton(
-              key: Key(WidgetKey.KEY_HOME_LIST_VIEW_ROW_TITLE + "_$index"),
-              child: Text(
-                "${article.title}",
-                style: TextStyle(
-                    color: Colors.blue,
-                    decoration: TextDecoration.underline,
-                    fontSize: 20
-                ),
+          Wrap(
+            children: [
+              ElevatedButton(
+                  key: Key("${WidgetKey.KEY_HOME_LIST_VIEW_ROW_TITLE}_$index"),
+                  style: const ButtonStyle(),
+                  onPressed: () async {
+                    context.read<HomeScreenViewModel>().moveWebViewScreen(context, index);
+                  },
+                  child: Text(
+                    article.title,
+                    style: const TextStyle(
+                        color: Colors.blue,
+                        decoration: TextDecoration.underline,
+                        decorationColor: Colors.blue,
+                        fontSize: 18
+                    ),
+                  )
               ),
-              onPressed: () async {
-                context.read<HomeScreenViewModel>().moveWebViewScreen(context, index);
-              }
-          )
+            ],
+          ),
         ]
     );
   }
 
   Widget tagsRow(BuildContext context, int index) {
     var article = context.read<HomeScreenViewModel>().articles[index];
-    if (article.tags.length <= 0)
-      return null;
-
-    var tagColor = Color.fromRGBO(200, 200, 200, 0.5);
-    var tags = article.tags.expand((e) => {
+    Color tagColor = const Color.fromRGBO(220, 220, 220, 0.5);
+    var tags = article.tags.expand((tag) => {
       Container(
         margin: const EdgeInsets.all(3.0),
         padding: const EdgeInsets.all(3.0),
@@ -192,12 +192,12 @@ class HomeScreenPage extends StatelessWidget {
           color: tagColor,
           borderRadius: BorderRadius.circular(5),
         ),
-        child: Text(e.name,
-            style: TextStyle(
+        child: Text(tag.name,
+            style: const TextStyle(
               fontSize: 14,
               fontStyle: FontStyle.italic,
               color: Colors.black,
-              backgroundColor: tagColor,
+              backgroundColor: Color.fromRGBO(220, 220, 220, 0.5),
             )
         ),
       )
@@ -217,8 +217,8 @@ class HomeScreenPage extends StatelessWidget {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Text(
-            "を${article.createdAtString}に投稿しました！",
-            style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+            "${article.createdAtString}に投稿しました.",
+            style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
           )
         ]
     );
@@ -249,7 +249,7 @@ class HomeScreenPage extends StatelessWidget {
           ),
           Text(
               article.likesCountString,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 20,
                 fontStyle: FontStyle.italic,
               )

@@ -9,11 +9,11 @@ class SplashScreenViewModel with ChangeNotifier {
   SplashScreenViewModel();
 
   void moveNextScreen(BuildContext context) {
-    Timer(Duration(seconds: 3), () {
+    Timer(const Duration(seconds: 3), () {
       // （backで戻れないように）置き換えて遷移する
       Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (BuildContext context) => HomeScreen())
+          MaterialPageRoute(builder: (BuildContext context) => HomeScreen(key: UniqueKey()))
       );
     });
   }
