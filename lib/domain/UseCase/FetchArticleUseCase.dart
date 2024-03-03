@@ -5,7 +5,7 @@ import '../api/api_response.dart';
 import '../repository/qiita_repository.dart';
 
 abstract class FetchArticleUseCaseInterface {
-  Future<ApiResponse> fetchArticle(int page, int perPage) async {
+  Future<ApiResponse> fetchArticle(int page, int perPage, String? query) async {
     throw UnimplementedError();
   }
 }
@@ -18,8 +18,8 @@ class FetchArticleUseCase extends FetchArticleUseCaseInterface {
         _qiitaRepository = qiitaRepository ?? QiitaRepository(QiitaClient(Dio()));
 
   @override
-  Future<ApiResponse> fetchArticle(int page, int perPage) async {
-    return _qiitaRepository.fetchItems(page, perPage);
+  Future<ApiResponse> fetchArticle(int page, int perPage, String? query) async {
+    return _qiitaRepository.fetchItems(page, perPage, query);
   }
 
 }

@@ -24,12 +24,15 @@ class _QiitaClient implements QiitaClient {
   Future<List<QiitaArticle>> fetchItems(
     int page,
     int perPage,
+    String? query,
   ) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
       r'page': page,
       r'per_page': perPage,
+      r'query': query,
     };
+    queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
     final _result = await _dio

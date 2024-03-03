@@ -23,7 +23,7 @@ class HomeScreenViewModel with ChangeNotifier {
     final dialogs = Dialogs(context: context);
     dialogs.showLoadingDialog();
 
-    return _fetchArticleUseCase.fetchArticle(page, perPage)
+    return _fetchArticleUseCase.fetchArticle(page, perPage, "")
         .then((result) {
           if (result.apiStatus.code != ApiResponseType.ok.code) {
             // ロード中のダイアログを閉じる
@@ -45,7 +45,7 @@ class HomeScreenViewModel with ChangeNotifier {
   Future<bool> loadMore(BuildContext context) async {
     page += 1;
 
-    return _fetchArticleUseCase.fetchArticle(page, perPage)
+    return _fetchArticleUseCase.fetchArticle(page, perPage, "")
         .then((result) {
           if (result.apiStatus.code != ApiResponseType.ok.code) {
             // エラーメッセージのダイアログを表示する
