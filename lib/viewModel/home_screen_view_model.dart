@@ -3,6 +3,7 @@ import 'package:flutter_api_sample/domain/UseCase/FetchArticleUseCase.dart';
 import 'package:flutter_api_sample/domain/api/qitta/model/qiita_article.dart';
 import 'package:flutter_api_sample/ui/parts/dialogs.dart';
 import 'package:flutter_api_sample/ui/screen/web_view_screen.dart';
+import 'package:intl/intl.dart';
 import '../domain/api/api_respose_type.dart';
 
 class HomeScreenViewModel with ChangeNotifier {
@@ -10,7 +11,8 @@ class HomeScreenViewModel with ChangeNotifier {
   final int perPage = 20; // 取得件数
 
   FetchArticleUseCaseInterface _fetchArticleUseCase;
-
+  DateTime now = DateTime.now();
+  final myFormat = DateFormat('yyyy-MM-dd');
   int page = 1;
   List<QiitaArticle> articles = [];
 
@@ -19,11 +21,13 @@ class HomeScreenViewModel with ChangeNotifier {
 
   Future<bool> fetchArticle(BuildContext context) async {
     page += 1;
+    // last 3 years
+    now = DateTime.now().subtract(const Duration(days: 360*3));
 
     final dialogs = Dialogs(context: context);
     dialogs.showLoadingDialog();
-
-    return _fetchArticleUseCase.fetchArticle(page, perPage, "")
+    
+    return _fetchArticleUseCase.invoke(page, perPage, query: "created:>${myFormat.format(now)}")
         .then((result) {
           if (result.apiStatus.code != ApiResponseType.ok.code) {
             // ロード中のダイアログを閉じる
@@ -44,8 +48,7 @@ class HomeScreenViewModel with ChangeNotifier {
 
   Future<bool> loadMore(BuildContext context) async {
     page += 1;
-
-    return _fetchArticleUseCase.fetchArticle(page, perPage, "")
+    return _fetchArticleUseCase.invoke(page, perPage, query: "created:>${myFormat.format(now)}")
         .then((result) {
           if (result.apiStatus.code != ApiResponseType.ok.code) {
             // エラーメッセージのダイアログを表示する

@@ -20,6 +20,7 @@ abstract class QiitaClient {
   Future<List<QiitaArticle>> fetchItems(
       @Query("page") int page,
       @Query("per_page") int perPage,
-      @Query("query") String? query);
+      {@Query("query") String? query}
+      );
 
 }
