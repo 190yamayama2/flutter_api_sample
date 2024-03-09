@@ -28,8 +28,8 @@ class QiitaRepository extends QiitaRepositoryInterface {
           int? errorCode = 0;
           String? errorMessage = "";
           switch (e.runtimeType) {
-            case DioException:
-              final res = (e as DioException).response;
+            case DioException dioException:
+              final res = dioException.response;
               if (res != null) {
                 errorCode = res.statusCode;
                 errorMessage = res.statusMessage;

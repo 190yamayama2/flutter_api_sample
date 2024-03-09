@@ -8,7 +8,7 @@ import '../domain/api/api_respose_type.dart';
 
 class HomeScreenViewModel with ChangeNotifier {
 
-  final int perPage = 20; // 取得件数
+  final int perPage = 20;
 
   FetchArticleUseCaseInterface _fetchArticleUseCase;
   DateTime now = DateTime.now();
@@ -30,16 +30,12 @@ class HomeScreenViewModel with ChangeNotifier {
     return _fetchArticleUseCase.invoke(page, perPage, query: "created:>${myFormat.format(now)}")
         .then((result) {
           if (result.apiStatus.code != ApiResponseType.ok.code) {
-            // ロード中のダイアログを閉じる
             dialogs.closeDialog();
-            // エラーメッセージのダイアログを表示する
             dialogs.showErrorDialog(result.message);
             notifyListeners();
             return false;
           }
-
           articles.addAll(result.result);
-          // ロード中のダイアログを閉じる
           dialogs.closeDialog();
           notifyListeners();
           return true;
@@ -51,7 +47,6 @@ class HomeScreenViewModel with ChangeNotifier {
     return _fetchArticleUseCase.invoke(page, perPage, query: "created:>${myFormat.format(now)}")
         .then((result) {
           if (result.apiStatus.code != ApiResponseType.ok.code) {
-            // エラーメッセージのダイアログを表示する
             final dialogs = Dialogs(context: context);
             dialogs.showErrorDialog(result.message);
             notifyListeners();
