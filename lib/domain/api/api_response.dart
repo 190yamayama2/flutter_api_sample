@@ -7,12 +7,13 @@ class ApiResponse {
   final dynamic result;
   final String? _customMessage;
 
-  // カスタムメッセージが指定されている場合はそっちを返却
-  // そうじゃない場合はエラーコードで決まったメッセージを返却
+  // Return if a custom message is specified
+  // If not, return a message determined by the error code
   get message {
-    if (_customMessage != null && _customMessage.isNotEmpty)
+    if (_customMessage != null && _customMessage.isNotEmpty) {
       return _customMessage;
-    return this.apiStatus.message;
+    }
+    return apiStatus.message;
   }
 
   ApiResponse(this.apiStatus, this.result, [this._customMessage]);

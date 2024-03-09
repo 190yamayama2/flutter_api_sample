@@ -6,7 +6,7 @@ import 'package:flutter_api_sample/domain/api/qitta/qiita_client.dart';
 import '../api/api_respose_type.dart';
 
 abstract class QiitaRepositoryInterface {
-  Future<ApiResponse> fetchItems(int page, int perPage, String? query) async {
+  Future<ApiResponse> fetchItems(int page, int perPage, {String? query}) async {
     throw UnimplementedError();
   }
 }
@@ -19,8 +19,8 @@ class QiitaRepository extends QiitaRepositoryInterface {
         _client = client ?? QiitaClient(Dio());
 
   @override
-  Future<ApiResponse> fetchItems(int page, int perPage, String? query) async {
-    return await _client.fetchItems(page, perPage, query)
+  Future<ApiResponse> fetchItems(int page, int perPage, {String? query}) async {
+    return await _client.fetchItems(page, perPage, query: query)
         .then((value) =>  ApiResponse(ApiResponseType.ok, value))
         .catchError((e) {
           // retrofit official document
@@ -28,8 +28,8 @@ class QiitaRepository extends QiitaRepositoryInterface {
           int? errorCode = 0;
           String? errorMessage = "";
           switch (e.runtimeType) {
-            case DioException:
-              final res = (e as DioException).response;
+            case DioException dioException:
+              final res = dioException.response;
               if (res != null) {
                 errorCode = res.statusCode;
                 errorMessage = res.statusMessage;

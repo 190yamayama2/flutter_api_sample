@@ -31,7 +31,7 @@ class Dialogs {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('エラー'),
+          title: const Text("エラー"),
           content: Text(message),
           actions: <Widget>[
             ElevatedButton(

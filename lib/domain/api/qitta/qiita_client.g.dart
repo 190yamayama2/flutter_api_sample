@@ -23,9 +23,9 @@ class _QiitaClient implements QiitaClient {
   @override
   Future<List<QiitaArticle>> fetchItems(
     int page,
-    int perPage,
+    int perPage, {
     String? query,
-  ) async {
+  }) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
       r'page': page,
